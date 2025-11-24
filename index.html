@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cave Treasure Hunt - Hand Tracking Game</title>
+    <title>Dice Probability Game - Learn Through Play!</title>
     <style>
         * {
             margin: 0;
@@ -12,8 +12,8 @@
         }
 
         body {
-            font-family: 'Comic Sans MS', 'Arial', sans-serif;
-            background: linear-gradient(180deg, #1a0033 0%, #0d1117 100%);
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             overflow: hidden;
             height: 100vh;
             display: flex;
@@ -28,63 +28,213 @@
             overflow: hidden;
         }
 
-        #gameCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
         #webcam {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            height: 150px;
             object-fit: cover;
             transform: scaleX(-1);
-            opacity: 0.25;
-            z-index: 2;
+            border: 3px solid white;
+            border-radius: 10px;
+            z-index: 5;
+            opacity: 0.8;
         }
 
         #handCanvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 3;
+            top: 10px;
+            right: 10px;
+            width: 200px;
+            height: 150px;
+            z-index: 6;
             pointer-events: none;
         }
 
-        #scoreBoard {
+        #gameBoard {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 2;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            padding: 15px 8px;
+            min-width: 70px;
+            backdrop-filter: blur(10px);
+        }
+
+        .column-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .chips-container {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 3px;
+            min-height: 120px;
+            align-items: center;
+        }
+
+        .chip {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            border: 3px solid #FF8C00;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            animation: chipPop 0.3s ease-out;
+        }
+
+        @keyframes chipPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        #diceArea {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 40px;
+            z-index: 3;
+        }
+
+        .die {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 60px;
+            font-weight: bold;
+            color: #333;
+            position: relative;
+        }
+
+        .die.rolling {
+            animation: rollDice 0.6s ease-in-out;
+        }
+
+        @keyframes rollDice {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(90deg) scale(1.1); }
+            50% { transform: rotate(180deg) scale(0.9); }
+            75% { transform: rotate(270deg) scale(1.1); }
+        }
+
+        #sumDisplay {
+            position: absolute;
+            top: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            padding: 15px 40px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 20px;
+            z-index: 3;
+        }
+
+        #rollCounter {
             position: absolute;
             top: 20px;
             left: 20px;
-            z-index: 4;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.7);
             padding: 20px 30px;
-            border-radius: 20px;
-            border: 4px solid #FFD700;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.6);
+            border-radius: 15px;
+            border: 3px solid white;
+            z-index: 4;
         }
 
-        #score {
-            font-size: 56px;
+        #rollCounter .label {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        #rollCounter .count {
             color: #FFD700;
+            font-size: 42px;
             font-weight: bold;
-            text-shadow: 0 0 15px rgba(255, 215, 0, 1);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
         }
 
-        #scoreLabel {
-            font-size: 24px;
-            color: #fff;
+        #instructions {
+            position: absolute;
+            top: 180px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 300px;
+            z-index: 4;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #instructions h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+
+        #instructions p {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        #instructions .gesture-hint {
+            background: #667eea;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
         }
 
-        #startScreen {
+        .die-label {
+            position: absolute;
+            top: -40px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .die.ready {
+            background: #4ade80;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+        }
+
+        .die.waiting {
+            background: #fbbf24;
+        }
+
+        #startScreen, #roundTransition, #victoryScreen {
             position: absolute;
             top: 0;
             left: 0;
@@ -96,103 +246,53 @@
             justify-content: center;
             align-items: center;
             z-index: 10;
+            padding: 40px;
         }
 
         #startScreen h1 {
-            font-size: 72px;
+            font-size: 64px;
             color: #FFD700;
             text-shadow: 0 0 30px rgba(255, 215, 0, 1);
             margin-bottom: 30px;
             animation: pulse 2s infinite;
         }
 
-        #startScreen p {
-            font-size: 28px;
-            color: #fff;
-            margin: 10px 0;
+        #startScreen p, #roundTransition p {
+            font-size: 24px;
+            color: white;
+            margin: 15px 0;
             text-align: center;
-            max-width: 800px;
+            max-width: 900px;
+            line-height: 1.6;
         }
 
-        #startButton {
-            margin-top: 50px;
-            padding: 25px 70px;
-            font-size: 40px;
+        #startScreen .highlight {
+            color: #4ade80;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        button {
+            margin-top: 30px;
+            padding: 20px 60px;
+            font-size: 32px;
             background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            transition: transform 0.2s;
-            animation: glow 2s infinite alternate;
-        }
-
-        #startButton:hover {
-            transform: scale(1.1);
-        }
-
-        #gameOverScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(139, 0, 0, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-        }
-
-        #gameOverScreen h1 {
-            font-size: 80px;
-            color: #fff;
-            text-shadow: 0 0 30px rgba(255, 0, 0, 1);
-            margin-bottom: 30px;
-            animation: shake 0.5s infinite;
-        }
-
-        #gameOverScreen .finalScore {
-            font-size: 52px;
-            color: #FFD700;
-            margin: 30px 0;
-        }
-
-        #restartButton {
-            margin-top: 40px;
-            padding: 25px 70px;
-            font-size: 40px;
-            background: linear-gradient(135deg, #4ECDC4, #44A08D);
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             transition: transform 0.2s;
         }
 
-        #restartButton:hover {
-            transform: scale(1.1);
+        button:hover {
+            transform: scale(1.05);
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
-        }
-
-        @keyframes glow {
-            0% { box-shadow: 0 10px 40px rgba(255, 107, 107, 0.4), 0 0 20px rgba(78, 205, 196, 0.4); }
-            100% { box-shadow: 0 10px 50px rgba(255, 107, 107, 0.8), 0 0 40px rgba(78, 205, 196, 0.8); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(-10px, 0) rotate(-2deg); }
-            75% { transform: translate(10px, 0) rotate(2deg); }
         }
 
         .hidden {
@@ -206,27 +306,118 @@
             transform: translate(-50%, -50%);
             color: white;
             font-size: 28px;
-            z-index: 5;
+            z-index: 11;
         }
 
-        .gem-popup {
+        .remove-animation {
+            animation: chipRemove 0.5s ease-out forwards;
+        }
+
+        @keyframes chipRemove {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(2) translateY(-50px); opacity: 0; }
+        }
+
+        #roundInfo {
             position: absolute;
-            font-size: 42px;
+            top: 20px;
+            right: 230px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 3px solid white;
+            color: white;
+            font-size: 24px;
             font-weight: bold;
-            pointer-events: none;
-            animation: floatUp 1.2s ease-out forwards;
-            z-index: 5;
+            z-index: 4;
         }
 
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-120px) scale(1.8);
-            }
+        #redistributionUI {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.98);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 15;
+            max-width: 1100px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        #redistributionUI h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 36px;
+            text-align: center;
+        }
+
+        #redistributionUI .instructions {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #redistributionGrid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .redist-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            min-width: 80px;
+        }
+
+        .redist-column .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .redist-column .chip-count {
+            font-size: 48px;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+
+        .redist-column .buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .redist-column button {
+            padding: 8px 16px;
+            font-size: 24px;
+            margin: 0;
+            border-radius: 8px;
+            min-width: 45px;
+        }
+
+        #chipsRemaining {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+            color: #333;
+            font-weight: bold;
+        }
+
+        #chipsRemaining.warning {
+            color: #ff6b6b;
         }
     </style>
 </head>
@@ -234,27 +425,45 @@
     <div id="gameContainer">
         <!-- Start Screen -->
         <div id="startScreen">
-            <h1>Cave Treasure Hunt!</h1>
-            <p>Use your HANDS to collect healthy items!</p>
-            <p>Move your hands up, down, left, and right!</p>
-            <p style="color: #4ade80; font-size: 30px; margin-top: 20px;">GRAB HEALTHY STUFF!</p>
-            <p style="color: #FFD700; font-size: 28px;">Apples, Bananas, Carrots, Water, Toothbrush, Books!</p>
-            <p style="color: #ff6b6b; font-size: 32px; margin-top: 20px;">AVOID GROSS STUFF!</p>
-            <p style="color: #ff8800; font-size: 28px;">Worms, Snails, Dirty Clothes = Lose Points!</p>
-            <p style="color: #ff0000; font-size: 36px;">MOLDY SANDWICH & TRASH = GAME OVER!</p>
-            <button id="startButton">START ADVENTURE!</button>
+            <h1>🎲 Dice Probability Game 🎲</h1>
+            <p>Welcome! You're going to learn about probability by playing with dice!</p>
+            <p class="highlight">The Challenge:</p>
+            <p>You have a board with columns numbered 2-12. Each column has 3 chips.</p>
+            <p>Roll two dice to get a sum, then remove a chip from that column!</p>
+            <p>Your goal: Remove ALL chips in as few rolls as possible!</p>
+            <p style="margin-top: 30px; font-size: 20px;">🎲 Throw your hands like rolling dice - Left hand = left die, Right hand = right die!</p>
+            <button id="startButton">START GAME!</button>
         </div>
 
-        <!-- Game Over Screen -->
-        <div id="gameOverScreen" class="hidden">
-            <h1>GAME OVER!</h1>
-            <p style="font-size: 36px; color: white;">Yuck! You touched something gross!</p>
-            <div class="finalScore">Final Score: <span id="finalScore">0</span></div>
-            <button id="restartButton">TRY AGAIN!</button>
+        <!-- Round Transition Screen -->
+        <div id="roundTransition" class="hidden">
+            <h1 id="transitionTitle">Round 1 Complete!</h1>
+            <p id="transitionText"></p>
+            <p style="color: #4ade80; font-size: 28px; margin-top: 30px;">Now it's your turn to be strategic!</p>
+            <p>You can redistribute the 33 chips however you want across columns 2-12.</p>
+            <p>Think about which numbers appeared most often...</p>
+            <button id="redistributeButton">REDISTRIBUTE CHIPS</button>
         </div>
 
-        <!-- Game Canvas (cave background) -->
-        <canvas id="gameCanvas"></canvas>
+        <!-- Victory Screen -->
+        <div id="victoryScreen" class="hidden">
+            <h1>🎉 Congratulations! 🎉</h1>
+            <div id="victoryStats"></div>
+            <p style="color: #4ade80; font-size: 24px; margin-top: 30px;">What did you learn?</p>
+            <p>Some numbers appear more often because there are more ways to make them!</p>
+            <p>For example: 7 can be made 6 different ways (1+6, 2+5, 3+4, 4+3, 5+2, 6+1)</p>
+            <p>But 2 can only be made one way (1+1), and 12 can only be made one way (6+6)</p>
+            <button id="playAgainButton">PLAY AGAIN</button>
+        </div>
+
+        <!-- Redistribution UI -->
+        <div id="redistributionUI" class="hidden">
+            <h2>Redistribute Your Chips!</h2>
+            <p class="instructions">Place all 33 chips across columns 2-12. Think strategically!</p>
+            <div id="chipsRemaining">Chips remaining: <span id="remainingCount">33</span></div>
+            <div id="redistributionGrid"></div>
+            <button id="startRound2Button" disabled>START ROUND 2</button>
+        </div>
 
         <!-- Webcam Feed -->
         <video id="webcam" autoplay playsinline></video>
@@ -262,10 +471,41 @@
         <!-- Hand Detection Canvas -->
         <canvas id="handCanvas"></canvas>
 
-        <!-- Score Board -->
-        <div id="scoreBoard">
-            <div id="scoreLabel">SCORE</div>
-            <div id="score">0</div>
+        <!-- Game Board -->
+        <div id="gameBoard" class="hidden"></div>
+
+        <!-- Dice Area -->
+        <div id="diceArea" class="hidden">
+            <div style="position: relative;">
+                <div class="die-label">Left Hand 👈</div>
+                <div class="die" id="die1">?</div>
+            </div>
+            <div style="position: relative;">
+                <div class="die-label">Right Hand 👉</div>
+                <div class="die" id="die2">?</div>
+            </div>
+        </div>
+
+        <!-- Sum Display -->
+        <div id="sumDisplay" class="hidden">Sum: <span id="sumValue">0</span></div>
+
+        <!-- Roll Counter -->
+        <div id="rollCounter" class="hidden">
+            <div class="label">Rolls</div>
+            <div class="count" id="rollCount">0</div>
+        </div>
+
+        <!-- Round Info -->
+        <div id="roundInfo" class="hidden">Round <span id="currentRound">1</span></div>
+
+        <!-- Instructions -->
+        <div id="instructions" class="hidden">
+            <h3>How to Play:</h3>
+            <p>🎲 Throw your left hand to roll left die</p>
+            <p>🎲 Throw your right hand to roll right die</p>
+            <p>✨ Both dice remove chip automatically</p>
+            <p>🎯 Clear all chips to win!</p>
+            <div class="gesture-hint">THROW BOTH HANDS!</div>
         </div>
 
         <!-- Loading Message -->
@@ -277,308 +517,68 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
     <script>
-        // Load Individual Images
-        const images = {
-            apple: new Image(),
-            banana: new Image(),
-            carrot: new Image(),
-            water: new Image(),
-            toothbrush: new Image(),
-            books: new Image(),
-            dirtyClothes: new Image(),
-            worm: new Image(),
-            snail: new Image(),
-            trash: new Image(),
-            moldySandwich: new Image()
-        };
-
-        // Set image sources
-        images.apple.src = '58117f27-b403-4ff7-ba52-3808ef723ec2-image_gen_oai_call_t4onxU8zozZoiD5ZfMynKO1D_img_14TFd-OwRQ8vScVE711P0.png';
-        images.banana.src = 'a61a2064-a453-4ee2-8bef-340b1708262a-image_gen_oai_call_I4EFdskFvdFl3AK76KRrGv2W_img_d6Zq92JR-wPijb38EzRrc.png';
-        images.carrot.src = '12b960fa-9a94-4016-b083-af14b4882bb2-image_gen_oai_call_30q0WqfYrMgcljDQJ9FQZG1f_img_40KRTSnEtNuLeEHM5jory.png';
-        images.water.src = '5cb37e77-4115-4fdb-81a7-02ed7d46067c-image_gen_oai_call_n3AoqwWdZT1oEoknFds3FCxW_img_qavC44jdFUHyNbS-r9Q5-.png';
-        images.toothbrush.src = '2c88c77b-9d6d-4780-89c2-e69a4ea5cdd3-image_gen_oai_call_LFGWIa21AHdtrVWdvKkYERMV_img_ULARlldPwa-3P3S2_-4Lc.png';
-        images.books.src = '8a87a464-ea8e-48e2-98f8-f4b608468c19-image_gen_oai_call_YxyVu5FWz1ecmm33mcH9Yl2w_img_KheUBgCOcPsSZ0okRuQHj.png';
-        images.dirtyClothes.src = 'd642e99f-0f0b-4a9a-b7e8-1029bfd32b81-image_gen_oai_call_Alw4LGPKRk6rOra9Y3G0D8GF_img_nzwrSqUznQl68zl6GfE_s.png';
-        images.worm.src = 'bbf42096-01f8-4731-94e6-33008879fca2-image_gen_oai_call_Z24IYIrUQIlOE1LwlCcNIdNh_img_ezURDHppA4ibAgSuVlP39.png';
-        images.snail.src = '7443a6e9-2555-4c93-99d6-83988311d414-image_gen_oai_call_PXzc5qRwcPnX2L2A4Phc1VXP_img_0BEQGgIbpryR4sh1s5xnF.png';
-        images.trash.src = 'c08ca1e6-3303-48dc-8117-d34264accd1b-image_gen_oai_call_U6bBr7w9SrLvGSHSTb6i2TAv_img_AOp062n38bqiNGVGbskLG.png';
-        images.moldySandwich.src = 'dfbfaee9-f519-40e9-a412-cce7552a6d5f-image_gen_oai_call_4y8l97PGWJN2GSfB5k2V6qYI_img_l34irMe9ICH2Dshkii2S9.png';
-
-        let imagesLoaded = 0;
-        Object.values(images).forEach(img => {
-            img.onload = () => { imagesLoaded++; };
-        });
-
-        // Audio Context for Music
-        let audioContext;
-        let musicPlaying = false;
-        let bassOscillator, leadOscillator, kickOscillator;
-        let gainNode, bassGain, leadGain, kickGain;
-
-        function initAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-
-        function startTechnoMusic() {
-            if (musicPlaying) return;
-            musicPlaying = true;
-
-            initAudio();
-
-            // Master Gain
-            gainNode = audioContext.createGain();
-            gainNode.gain.value = 0.3;
-            gainNode.connect(audioContext.destination);
-
-            // Bass Line (Deep techno bass)
-            bassGain = audioContext.createGain();
-            bassGain.gain.value = 0.4;
-            bassGain.connect(gainNode);
-
-            bassOscillator = audioContext.createOscillator();
-            bassOscillator.type = 'sawtooth';
-            bassOscillator.frequency.value = 55; // A1
-            bassOscillator.connect(bassGain);
-            bassOscillator.start();
-
-            // Lead Synth (Melodic techno)
-            leadGain = audioContext.createGain();
-            leadGain.gain.value = 0.15;
-            leadGain.connect(gainNode);
-
-            leadOscillator = audioContext.createOscillator();
-            leadOscillator.type = 'square';
-            leadOscillator.frequency.value = 440; // A4
-            leadOscillator.connect(leadGain);
-            leadOscillator.start();
-
-            // Kick Drum Pattern
-            kickGain = audioContext.createGain();
-            kickGain.gain.value = 0.5;
-            kickGain.connect(gainNode);
-
-            // Techno Sequence Loop
-            playTechnoSequence();
-        }
-
-        function playTechnoSequence() {
-            if (!musicPlaying) return;
-
-            const now = audioContext.currentTime;
-            const beatDuration = 0.4; // Fast techno tempo
-
-            // Bass pattern (pumping)
-            const bassNotes = [55, 55, 58, 55, 52, 55, 58, 62];
-            bassNotes.forEach((note, i) => {
-                const time = now + i * beatDuration;
-                bassOscillator.frequency.setValueAtTime(note, time);
-                bassGain.gain.setValueAtTime(0.4, time);
-                bassGain.gain.exponentialRampToValueAtTime(0.01, time + beatDuration * 0.8);
-            });
-
-            // Lead melody (arpeggiated)
-            const leadNotes = [440, 523, 659, 523, 440, 392, 440, 523];
-            leadNotes.forEach((note, i) => {
-                const time = now + i * beatDuration;
-                leadOscillator.frequency.setValueAtTime(note, time);
-                leadGain.gain.setValueAtTime(0.15, time);
-                leadGain.gain.exponentialRampToValueAtTime(0.01, time + beatDuration * 0.5);
-            });
-
-            // Kick drum (4/4 beat)
-            for (let i = 0; i < 8; i++) {
-                const time = now + i * beatDuration;
-                if (i % 2 === 0) { // Kick on every other beat
-                    kickOscillator = audioContext.createOscillator();
-                    kickOscillator.type = 'sine';
-                    kickOscillator.frequency.setValueAtTime(150, time);
-                    kickOscillator.frequency.exponentialRampToValueAtTime(40, time + 0.1);
-                    kickOscillator.connect(kickGain);
-                    kickOscillator.start(time);
-                    kickOscillator.stop(time + 0.15);
-
-                    kickGain.gain.setValueAtTime(0.8, time);
-                    kickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.15);
-                }
-            }
-
-            // Loop the sequence
-            setTimeout(() => playTechnoSequence(), beatDuration * 8 * 1000);
-        }
-
-        function stopMusic() {
-            musicPlaying = false;
-            if (bassOscillator) bassOscillator.stop();
-            if (leadOscillator) leadOscillator.stop();
-        }
-
-        // Boom sound effect for game over
-        function playBoomSound() {
-            initAudio();
-
-            const now = audioContext.currentTime;
-
-            // Create a deep bass explosion
-            const boomOsc = audioContext.createOscillator();
-            const boomGain = audioContext.createGain();
-
-            boomOsc.type = 'sine';
-            boomOsc.frequency.setValueAtTime(150, now);
-            boomOsc.frequency.exponentialRampToValueAtTime(40, now + 0.5);
-
-            boomGain.gain.setValueAtTime(1.0, now);
-            boomGain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
-
-            boomOsc.connect(boomGain);
-            boomGain.connect(audioContext.destination);
-
-            boomOsc.start(now);
-            boomOsc.stop(now + 1.0);
-
-            // Add distortion/noise for impact
-            const noiseBuffer = audioContext.createBuffer(1, audioContext.sampleRate * 0.3, audioContext.sampleRate);
-            const noiseData = noiseBuffer.getChannelData(0);
-            for (let i = 0; i < noiseBuffer.length; i++) {
-                noiseData[i] = Math.random() * 2 - 1;
-            }
-
-            const noiseSource = audioContext.createBufferSource();
-            const noiseGain = audioContext.createGain();
-            const noiseFilter = audioContext.createBiquadFilter();
-
-            noiseFilter.type = 'lowpass';
-            noiseFilter.frequency.setValueAtTime(500, now);
-            noiseFilter.frequency.exponentialRampToValueAtTime(50, now + 0.3);
-
-            noiseGain.gain.setValueAtTime(0.4, now);
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-
-            noiseSource.buffer = noiseBuffer;
-            noiseSource.connect(noiseFilter);
-            noiseFilter.connect(noiseGain);
-            noiseGain.connect(audioContext.destination);
-
-            noiseSource.start(now);
-        }
-
         // Game State
         const gameState = {
-            score: 0,
-            speed: 2,
-            baseSpeed: 2,
-            gems: [],
-            obstacles: [],
-            handPositions: [],
+            round: 1,
+            rollCount: 0,
+            round1Rolls: 0,
+            round2Rolls: 0,
+            chips: {},
             gameStarted: false,
-            caveOffset: 0,
-            gameTime: 0,
-            gameOver: false,
-            particles: [] // For sparkle effects
+            die1Value: null,
+            die2Value: null,
+            die1Rolled: false,
+            die2Rolled: false,
+            currentSum: 0,
+            handTracking: {
+                left: { prevY: 0, throwDetected: false, lastThrowTime: 0 },
+                right: { prevY: 0, throwDetected: false, lastThrowTime: 0 }
+            }
         };
 
-        // Collectible Types - Healthy items kids should grab!
-        const gemTypes = [
-            { type: 'apple', name: 'Apple', value: 10, size: 45, color: '#FF6347', img: images.apple },
-            { type: 'banana', name: 'Banana', value: 12, size: 50, color: '#FFD700', img: images.banana },
-            { type: 'carrot', name: 'Carrot', value: 15, size: 48, color: '#FF8C00', img: images.carrot },
-            { type: 'water', name: 'Water', value: 20, size: 45, color: '#4DA6FF', img: images.water },
-            { type: 'toothbrush', name: 'Toothbrush', value: 25, size: 55, color: '#00CED1', img: images.toothbrush },
-            { type: 'books', name: 'Books', value: 30, size: 55, color: '#4682B4', img: images.books }
-        ];
-
-        // Obstacle Types - gross/yucky objects kids should avoid!
-        const obstacleTypes = [
-            {
-                name: 'Worm',
-                type: 'worm',
-                value: -8,
-                size: 50,
-                color: '#D4756B',
-                isDangerous: true,
-                isInstantDeath: false,
-                img: images.worm
-            },
-            {
-                name: 'Snail',
-                type: 'snail',
-                value: -15,
-                size: 55,
-                color: '#8B9C3C',
-                isDangerous: true,
-                isInstantDeath: false,
-                img: images.snail
-            },
-            {
-                name: 'Moldy Sandwich',
-                type: 'moldy_sandwich',
-                value: 0,
-                size: 60,
-                color: '#9ACD32',
-                isDangerous: true,
-                isInstantDeath: true, // GAME OVER!
-                glow: '#00FF00',
-                img: images.moldySandwich
-            },
-            {
-                name: 'Trash Can',
-                type: 'trash',
-                value: 0,
-                size: 65,
-                color: '#808080',
-                isDangerous: true,
-                isInstantDeath: true, // GAME OVER!
-                glow: '#FF0000',
-                img: images.trash
-            },
-            {
-                name: 'Dirty Clothes',
-                type: 'clothes',
-                value: -10,
-                size: 60,
-                color: '#6B8E23',
-                isDangerous: true,
-                isInstantDeath: false,
-                img: images.dirtyClothes
+        // Initialize chips for Round 1 (3 chips per column)
+        function initializeRound1Chips() {
+            gameState.chips = {};
+            for (let i = 2; i <= 12; i++) {
+                gameState.chips[i] = 3;
             }
-        ];
-
-        // Canvas Setup
-        const gameCanvas = document.getElementById('gameCanvas');
-        const gameCtx = gameCanvas.getContext('2d');
-        const handCanvas = document.getElementById('handCanvas');
-        const handCtx = handCanvas.getContext('2d');
-
-        function resizeCanvas() {
-            gameCanvas.width = window.innerWidth;
-            gameCanvas.height = window.innerHeight;
-            handCanvas.width = window.innerWidth;
-            handCanvas.height = window.innerHeight;
         }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
 
-        // Start & Restart Buttons
-        document.getElementById('startButton').addEventListener('click', async () => {
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('loading').classList.remove('hidden');
-            await initCamera();
-            startGame();
-        });
+        // Detect throwing gesture (rapid downward movement)
+        function detectThrow(hand, landmarks) {
+            const wrist = landmarks[0];
+            const currentY = wrist.y;
+            const prevY = gameState.handTracking[hand].prevY;
 
-        document.getElementById('restartButton').addEventListener('click', () => {
-            document.getElementById('gameOverScreen').classList.add('hidden');
-            startGame();
-        });
+            // Calculate downward velocity
+            const velocity = currentY - prevY;
 
-        // Initialize Camera
+            // Throwing detected: rapid downward movement
+            const isThrow = velocity > 0.08; // Threshold for throw detection
+
+            gameState.handTracking[hand].prevY = currentY;
+
+            return isThrow;
+        }
+
+        // Reset dice state for next round
+        function resetDiceState() {
+            gameState.die1Value = null;
+            gameState.die2Value = null;
+            gameState.die1Rolled = false;
+            gameState.die2Rolled = false;
+            updateDiceDisplay();
+        }
+
+        // Initialize Camera and Hand Tracking
         async function initCamera() {
             const video = document.getElementById('webcam');
+            const handCanvas = document.getElementById('handCanvas');
+            const handCtx = handCanvas.getContext('2d');
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 1280, height: 720 }
+                    video: { width: 640, height: 480 }
                 });
                 video.srcObject = stream;
 
@@ -587,393 +587,407 @@
                 });
 
                 hands.setOptions({
-                    maxNumHands: 2,
+                    maxNumHands: 2, // Track both hands
                     modelComplexity: 1,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
+                    minDetectionConfidence: 0.6,
+                    minTrackingConfidence: 0.6
                 });
 
-                hands.onResults(onHandsDetected);
+                hands.onResults((results) => {
+                    handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+
+                    if (results.multiHandLandmarks && results.multiHandedness && gameState.gameStarted) {
+                        for (let i = 0; i < results.multiHandLandmarks.length; i++) {
+                            const landmarks = results.multiHandLandmarks[i];
+                            const handedness = results.multiHandedness[i].label; // "Left" or "Right"
+
+                            // MediaPipe returns mirrored labels, so flip them
+                            const hand = handedness === 'Left' ? 'right' : 'left';
+
+                            // Draw hand indicator
+                            const wrist = landmarks[0];
+                            const x = (1 - wrist.x) * handCanvas.width;
+                            const y = wrist.y * handCanvas.height;
+
+                            // Check if hand is throwing
+                            const isThrow = detectThrow(hand, landmarks);
+                            const now = Date.now();
+
+                            if (isThrow && now - gameState.handTracking[hand].lastThrowTime > 800) {
+                                gameState.handTracking[hand].lastThrowTime = now;
+
+                                // Roll the corresponding die
+                                if (hand === 'left' && !gameState.die1Rolled) {
+                                    rollDie(1);
+                                } else if (hand === 'right' && !gameState.die2Rolled) {
+                                    rollDie(2);
+                                }
+                            }
+
+                            // Draw hand visualization
+                            const dieRolled = hand === 'left' ? gameState.die1Rolled : gameState.die2Rolled;
+                            handCtx.fillStyle = dieRolled ? 'rgba(74, 222, 128, 0.7)' : 'rgba(255, 215, 0, 0.6)';
+                            handCtx.beginPath();
+                            handCtx.arc(x, y, 30, 0, Math.PI * 2);
+                            handCtx.fill();
+
+                            // Label
+                            handCtx.fillStyle = 'white';
+                            handCtx.font = 'bold 16px Arial';
+                            handCtx.fillText(hand === 'left' ? 'L' : 'R', x - 6, y + 6);
+                        }
+                    }
+                });
 
                 const camera = new Camera(video, {
                     onFrame: async () => await hands.send({ image: video }),
-                    width: 1280,
-                    height: 720
+                    width: 640,
+                    height: 480
                 });
 
                 camera.start();
                 document.getElementById('loading').classList.add('hidden');
             } catch (err) {
-                alert('Camera access denied! Please allow camera to play.');
+                alert('Camera access required to play! Please allow camera access.');
                 console.error(err);
             }
         }
 
-        // Hand Detection
-        function onHandsDetected(results) {
-            handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
-            gameState.handPositions = [];
+        // Roll individual die
+        function rollDie(dieNumber) {
+            const die = document.getElementById(`die${dieNumber}`);
+            die.classList.add('rolling');
 
-            if (results.multiHandLandmarks) {
-                for (const landmarks of results.multiHandLandmarks) {
-                    const indexTip = landmarks[8];
-                    const x = (1 - indexTip.x) * handCanvas.width;
-                    const y = indexTip.y * handCanvas.height;
+            // Random value
+            const value = Math.floor(Math.random() * 6) + 1;
 
-                    gameState.handPositions.push({ x, y });
-
-                    // Draw glowing hand indicator
-                    handCtx.shadowColor = '#FFD700';
-                    handCtx.shadowBlur = 20;
-                    handCtx.fillStyle = 'rgba(255, 215, 0, 0.6)';
-                    handCtx.beginPath();
-                    handCtx.arc(x, y, 35, 0, Math.PI * 2);
-                    handCtx.fill();
-
-                    handCtx.strokeStyle = '#FFD700';
-                    handCtx.lineWidth = 4;
-                    handCtx.stroke();
-                    handCtx.shadowBlur = 0;
+            setTimeout(() => {
+                if (dieNumber === 1) {
+                    gameState.die1Value = value;
+                    gameState.die1Rolled = true;
+                } else {
+                    gameState.die2Value = value;
+                    gameState.die2Rolled = true;
                 }
+
+                die.textContent = getDiceFace(value);
+                die.classList.remove('rolling');
+                die.classList.add('ready');
+
+                updateDiceDisplay();
+
+                // Check if both dice are rolled
+                if (gameState.die1Rolled && gameState.die2Rolled) {
+                    setTimeout(() => {
+                        processRoll();
+                    }, 300);
+                }
+            }, 400);
+        }
+
+        // Update dice display
+        function updateDiceDisplay() {
+            const die1 = document.getElementById('die1');
+            const die2 = document.getElementById('die2');
+
+            // Update die colors based on state
+            if (gameState.die1Rolled) {
+                die1.classList.add('ready');
+            } else {
+                die1.classList.remove('ready');
+                die1.classList.add('waiting');
+            }
+
+            if (gameState.die2Rolled) {
+                die2.classList.add('ready');
+            } else {
+                die2.classList.remove('ready');
+                die2.classList.add('waiting');
+            }
+
+            // Update sum display
+            if (gameState.die1Rolled && gameState.die2Rolled) {
+                const sum = gameState.die1Value + gameState.die2Value;
+                document.getElementById('sumValue').textContent = sum;
+            } else {
+                document.getElementById('sumValue').textContent = '?';
             }
         }
 
-        // Start Game
-        function startGame() {
-            gameState.gameStarted = true;
-            gameState.gameOver = false;
-            gameState.score = 0;
-            gameState.gems = [];
-            gameState.obstacles = [];
-            gameState.particles = [];
-            gameState.speed = 2;
-            gameState.baseSpeed = 2;
-            gameState.gameTime = 0;
-            updateScore();
+        // Process roll when both dice are ready
+        function processRoll() {
+            const sum = gameState.die1Value + gameState.die2Value;
+            gameState.currentSum = sum;
 
-            // Start techno music!
-            startTechnoMusic();
+            gameState.rollCount++;
+            if (gameState.round === 1) {
+                gameState.round1Rolls++;
+            } else {
+                gameState.round2Rolls++;
+            }
+            updateRollCounter();
 
-            gameLoop();
+            // Remove chip if available
+            if (gameState.chips[sum] > 0) {
+                removeChip(sum);
+            }
+
+            // Check if round complete
+            if (isRoundComplete()) {
+                endRound();
+            } else {
+                // Reset for next roll
+                setTimeout(() => {
+                    resetDiceState();
+                }, 800);
+            }
         }
 
-        // Game Over
-        function triggerGameOver() {
-            gameState.gameOver = true;
+        // Get dice face emoji
+        function getDiceFace(value) {
+            const faces = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            return faces[value];
+        }
+
+        // Remove chip from column
+        function removeChip(column) {
+            if (gameState.chips[column] > 0) {
+                gameState.chips[column]--;
+                renderBoard();
+            }
+        }
+
+        // Check if round is complete
+        function isRoundComplete() {
+            return Object.values(gameState.chips).every(count => count === 0);
+        }
+
+        // End current round
+        function endRound() {
             gameState.gameStarted = false;
 
-            // Stop music and play boom!
-            stopMusic();
-            playBoomSound();
-
-            document.getElementById('finalScore').textContent = gameState.score;
-            document.getElementById('gameOverScreen').classList.remove('hidden');
-        }
-
-        // Spawn Gems
-        function spawnGem() {
-            if (Math.random() < 0.025) {
-                const gemType = gemTypes[Math.floor(Math.random() * gemTypes.length)];
-                const positions = ['top', 'middle', 'bottom'];
-                const position = positions[Math.floor(Math.random() * positions.length)];
-
-                let y;
-                if (position === 'top') y = 120;
-                else if (position === 'middle') y = gameCanvas.height / 2;
-                else y = gameCanvas.height - 120;
-
-                gameState.gems.push({
-                    x: gameCanvas.width + 60,
-                    y: y,
-                    type: gemType,
-                    rotation: 0,
-                    pulse: 0
-                });
-            }
-        }
-
-        // Spawn Obstacles
-        function spawnObstacle() {
-            const spawnChance = 0.018 + (gameState.gameTime / 8000);
-
-            if (Math.random() < spawnChance) {
-                const instantDeathChance = Math.min(0.12 + (gameState.gameTime / 15000), 0.35);
-                let obstacleType;
-
-                if (Math.random() < instantDeathChance) {
-                    const deathObstacles = obstacleTypes.filter(o => o.isInstantDeath);
-                    obstacleType = deathObstacles[Math.floor(Math.random() * deathObstacles.length)];
-                } else {
-                    const regularObstacles = obstacleTypes.filter(o => !o.isInstantDeath);
-                    obstacleType = regularObstacles[Math.floor(Math.random() * regularObstacles.length)];
-                }
-
-                const positions = ['top', 'middle', 'bottom'];
-                const position = positions[Math.floor(Math.random() * positions.length)];
-
-                let y;
-                if (position === 'top') y = 120;
-                else if (position === 'middle') y = gameCanvas.height / 2;
-                else y = gameCanvas.height - 120;
-
-                gameState.obstacles.push({
-                    x: gameCanvas.width + 60,
-                    y: y,
-                    type: obstacleType,
-                    wobble: 0,
-                    tentaclePhase: Math.random() * Math.PI * 2
-                });
-            }
-        }
-
-        // Update Gems
-        function updateGems() {
-            gameState.gems = gameState.gems.filter(gem => {
-                gem.x -= gameState.speed;
-                gem.rotation += 0.05;
-                gem.pulse = Math.sin(Date.now() / 200) * 5;
-
-                if (gameState.handPositions.length > 0) {
-                    for (const hand of gameState.handPositions) {
-                        const distance = Math.sqrt(
-                            Math.pow(gem.x - hand.x, 2) + Math.pow(gem.y - hand.y, 2)
-                        );
-
-                        if (distance < gem.type.size + 35) {
-                            collectGem(gem);
-                            return false;
-                        }
-                    }
-                }
-
-                return gem.x > -100;
-            });
-        }
-
-        // Update Obstacles
-        function updateObstacles() {
-            gameState.obstacles = gameState.obstacles.filter(obstacle => {
-                obstacle.x -= gameState.speed;
-                obstacle.wobble = Math.sin(Date.now() / 300) * 5;
-                obstacle.tentaclePhase += 0.1;
-
-                if (gameState.handPositions.length > 0) {
-                    for (const hand of gameState.handPositions) {
-                        const distance = Math.sqrt(
-                            Math.pow(obstacle.x - hand.x, 2) + Math.pow(obstacle.y - hand.y, 2)
-                        );
-
-                        if (distance < obstacle.type.size + 35) {
-                            hitObstacle(obstacle);
-                            return false;
-                        }
-                    }
-                }
-
-                return obstacle.x > -100;
-            });
-        }
-
-        // Collect Gem
-        function collectGem(gem) {
-            gameState.score += gem.type.value;
-            updateScore();
-            showPointPopup(gem, false);
-            createParticles(gem.x, gem.y, gem.type.color);
-        }
-
-        // Hit Obstacle
-        function hitObstacle(obstacle) {
-            if (obstacle.type.isInstantDeath) {
-                triggerGameOver();
+            if (gameState.round === 1) {
+                // Show transition screen
+                document.getElementById('transitionText').textContent =
+                    `You completed Round 1 in ${gameState.round1Rolls} rolls! Some numbers probably appeared more than others...`;
+                document.getElementById('roundTransition').classList.remove('hidden');
             } else {
-                gameState.score += obstacle.type.value;
-                if (gameState.score < 0) gameState.score = 0;
-                updateScore();
-                showPointPopup(obstacle, true);
+                // Show victory screen
+                showVictoryScreen();
             }
         }
 
-        // Show Point Popup
-        function showPointPopup(item, isNegative) {
-            const popup = document.createElement('div');
-            popup.className = 'gem-popup';
+        // Show victory screen
+        function showVictoryScreen() {
+            const improvement = gameState.round1Rolls - gameState.round2Rolls;
+            const percentage = ((improvement / gameState.round1Rolls) * 100).toFixed(1);
 
-            if (isNegative) {
-                popup.textContent = `${item.type.value}`;
-                popup.style.color = '#ff0000';
-                popup.style.textShadow = '0 0 15px rgba(255, 0, 0, 1)';
+            let message = '';
+            if (improvement > 0) {
+                message = `You improved by ${improvement} rolls (${percentage}% better)! 🎉`;
+            } else if (improvement < 0) {
+                message = `Round 1 was better by ${Math.abs(improvement)} rolls. Try redistributing differently!`;
             } else {
-                popup.textContent = `+${item.type.value}`;
-                popup.style.color = item.type.color;
-                popup.style.textShadow = `0 0 15px ${item.type.color}`;
+                message = `Both rounds took the same number of rolls!`;
             }
 
-            popup.style.left = item.x + 'px';
-            popup.style.top = item.y + 'px';
-            document.getElementById('gameContainer').appendChild(popup);
+            document.getElementById('victoryStats').innerHTML = `
+                <p style="font-size: 32px; color: white; margin: 20px 0;">
+                    Round 1: ${gameState.round1Rolls} rolls (even distribution)
+                </p>
+                <p style="font-size: 32px; color: white; margin: 20px 0;">
+                    Round 2: ${gameState.round2Rolls} rolls (your strategy)
+                </p>
+                <p style="font-size: 36px; color: #4ade80; margin: 30px 0;">
+                    ${message}
+                </p>
+            `;
 
-            setTimeout(() => popup.remove(), 1200);
+            document.getElementById('victoryScreen').classList.remove('hidden');
         }
 
-        // Create Particles
-        function createParticles(x, y, color) {
-            for (let i = 0; i < 15; i++) {
-                gameState.particles.push({
-                    x: x,
-                    y: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8,
-                    color: color,
-                    life: 30
-                });
-            }
-        }
+        // Render game board
+        function renderBoard() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
 
-        // Update Particles
-        function updateParticles() {
-            gameState.particles = gameState.particles.filter(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life--;
-                return p.life > 0;
-            });
-        }
+            for (let i = 2; i <= 12; i++) {
+                const column = document.createElement('div');
+                column.className = 'column';
 
-        // Update Score
-        function updateScore() {
-            document.getElementById('score').textContent = gameState.score;
-        }
+                const number = document.createElement('div');
+                number.className = 'column-number';
+                number.textContent = i;
 
-        // Draw Cave Background
-        function drawCave() {
-            const ctx = gameCtx;
-            gameState.caveOffset += gameState.speed;
+                const chipsContainer = document.createElement('div');
+                chipsContainer.className = 'chips-container';
 
-            // Dark gradient background
-            const gradient = ctx.createLinearGradient(0, 0, 0, gameCanvas.height);
-            gradient.addColorStop(0, '#1a0033');
-            gradient.addColorStop(0.5, '#0d1117');
-            gradient.addColorStop(1, '#1a1a2e');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-            // Cave walls with texture
-            ctx.strokeStyle = '#2d2d44';
-            ctx.lineWidth = 60;
-            for (let i = 0; i < 12; i++) {
-                const offset = (gameState.caveOffset + i * 180) % (gameCanvas.height + 200);
-                ctx.globalAlpha = 0.3;
-                ctx.beginPath();
-                ctx.moveTo(0, offset);
-                ctx.lineTo(gameCanvas.width, offset);
-                ctx.stroke();
-            }
-            ctx.globalAlpha = 1;
-
-            // Glowing path stones
-            ctx.fillStyle = '#5a5a6e';
-            ctx.shadowColor = '#6a6a7e';
-            ctx.shadowBlur = 10;
-            for (let i = 0; i < 20; i++) {
-                const x = (gameCanvas.width / 2) + Math.sin(i * 0.6 + gameState.caveOffset / 50) * 120;
-                const y = ((gameState.caveOffset + i * 70) % (gameCanvas.height + 100));
-                ctx.beginPath();
-                ctx.ellipse(x, y, 70, 45, 0, 0, Math.PI * 2);
-                ctx.fill();
-            }
-            ctx.shadowBlur = 0;
-        }
-
-        // Draw Gems (collectibles) - Using actual images
-        function drawGems() {
-            gameState.gems.forEach(gem => {
-                const ctx = gameCtx;
-                const size = gem.type.size + gem.pulse;
-
-                // Glow effect
-                ctx.shadowColor = gem.type.color;
-                ctx.shadowBlur = 20;
-
-                // Draw full image
-                if (gem.type.img && gem.type.img.complete) {
-                    ctx.drawImage(
-                        gem.type.img,
-                        gem.x - size, gem.y - size, size * 2, size * 2
-                    );
+                for (let j = 0; j < gameState.chips[i]; j++) {
+                    const chip = document.createElement('div');
+                    chip.className = 'chip';
+                    chipsContainer.appendChild(chip);
                 }
 
-                ctx.shadowBlur = 0;
-            });
+                column.appendChild(number);
+                column.appendChild(chipsContainer);
+                board.appendChild(column);
+            }
         }
 
-        // Draw Obstacles (Gross/Yucky objects) - Using actual images
-        function drawObstacles() {
-            gameState.obstacles.forEach(obstacle => {
-                const ctx = gameCtx;
-                const size = obstacle.type.size;
-                const x = obstacle.x + obstacle.wobble;
-                const y = obstacle.y;
-
-                // Glow for instant death objects
-                if (obstacle.type.isInstantDeath) {
-                    ctx.shadowColor = obstacle.type.glow;
-                    ctx.shadowBlur = 35;
-                }
-
-                // Draw full image
-                if (obstacle.type.img && obstacle.type.img.complete) {
-                    ctx.drawImage(
-                        obstacle.type.img,
-                        x - size, y - size, size * 2, size * 2
-                    );
-                }
-
-                ctx.shadowBlur = 0;
-            });
+        // Update roll counter
+        function updateRollCounter() {
+            document.getElementById('rollCount').textContent = gameState.rollCount;
         }
 
-        // Draw Particles
-        function drawParticles() {
-            gameState.particles.forEach(p => {
-                const ctx = gameCtx;
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = p.life / 30;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.globalAlpha = 1;
-            });
+        // Start Round 1
+        function startRound1() {
+            gameState.round = 1;
+            gameState.rollCount = 0;
+            gameState.round1Rolls = 0;
+            initializeRound1Chips();
+            startGameplay();
         }
 
-        // Game Loop
-        function gameLoop() {
-            if (!gameState.gameStarted || gameState.gameOver) return;
+        // Start gameplay (common for both rounds)
+        function startGameplay() {
+            gameState.gameStarted = true;
+            resetDiceState();
 
-            gameState.gameTime++;
-            gameState.baseSpeed = 2 + (gameState.gameTime / 250);
+            document.getElementById('currentRound').textContent = gameState.round;
+            document.getElementById('gameBoard').classList.remove('hidden');
+            document.getElementById('diceArea').classList.remove('hidden');
+            document.getElementById('sumDisplay').classList.remove('hidden');
+            document.getElementById('rollCounter').classList.remove('hidden');
+            document.getElementById('roundInfo').classList.remove('hidden');
+            document.getElementById('instructions').classList.remove('hidden');
 
-            if (Math.random() < 0.008) {
-                gameState.speed = gameState.baseSpeed + Math.random() * 2.5;
+            renderBoard();
+            updateRollCounter();
+        }
+
+        // Show redistribution UI
+        function showRedistributionUI() {
+            document.getElementById('roundTransition').classList.add('hidden');
+            document.getElementById('redistributionUI').classList.remove('hidden');
+
+            const grid = document.getElementById('redistributionGrid');
+            grid.innerHTML = '';
+
+            // Reset chips to 0
+            for (let i = 2; i <= 12; i++) {
+                gameState.chips[i] = 0;
+            }
+
+            // Create redistribution columns
+            for (let i = 2; i <= 12; i++) {
+                const column = document.createElement('div');
+                column.className = 'redist-column';
+
+                const number = document.createElement('div');
+                number.className = 'number';
+                number.textContent = i;
+
+                const chipCount = document.createElement('div');
+                chipCount.className = 'chip-count';
+                chipCount.id = `redist-${i}`;
+                chipCount.textContent = '0';
+
+                const buttons = document.createElement('div');
+                buttons.className = 'buttons';
+
+                const plusBtn = document.createElement('button');
+                plusBtn.textContent = '+';
+                plusBtn.onclick = () => addChip(i);
+
+                const minusBtn = document.createElement('button');
+                minusBtn.textContent = '-';
+                minusBtn.onclick = () => removeRedistChip(i);
+
+                buttons.appendChild(minusBtn);
+                buttons.appendChild(plusBtn);
+
+                column.appendChild(number);
+                column.appendChild(chipCount);
+                column.appendChild(buttons);
+                grid.appendChild(column);
+            }
+
+            updateRemainingChips();
+        }
+
+        // Add chip during redistribution
+        function addChip(column) {
+            const totalChips = Object.values(gameState.chips).reduce((a, b) => a + b, 0);
+            if (totalChips < 33) {
+                gameState.chips[column]++;
+                document.getElementById(`redist-${column}`).textContent = gameState.chips[column];
+                updateRemainingChips();
+            }
+        }
+
+        // Remove chip during redistribution
+        function removeRedistChip(column) {
+            if (gameState.chips[column] > 0) {
+                gameState.chips[column]--;
+                document.getElementById(`redist-${column}`).textContent = gameState.chips[column];
+                updateRemainingChips();
+            }
+        }
+
+        // Update remaining chips counter
+        function updateRemainingChips() {
+            const totalChips = Object.values(gameState.chips).reduce((a, b) => a + b, 0);
+            const remaining = 33 - totalChips;
+
+            document.getElementById('remainingCount').textContent = remaining;
+
+            const chipsRemainingDiv = document.getElementById('chipsRemaining');
+            if (remaining === 0) {
+                chipsRemainingDiv.classList.remove('warning');
+                chipsRemainingDiv.classList.add('success');
+                document.getElementById('startRound2Button').disabled = false;
             } else {
-                gameState.speed = gameState.baseSpeed;
+                chipsRemainingDiv.classList.add('warning');
+                document.getElementById('startRound2Button').disabled = true;
             }
-
-            // Update
-            spawnGem();
-            spawnObstacle();
-            updateGems();
-            updateObstacles();
-            updateParticles();
-
-            // Draw
-            drawCave();
-            drawGems();
-            drawObstacles();
-            drawParticles();
-
-            requestAnimationFrame(gameLoop);
         }
+
+        // Start Round 2
+        function startRound2() {
+            gameState.round = 2;
+            gameState.rollCount = 0;
+            gameState.round2Rolls = 0;
+
+            document.getElementById('redistributionUI').classList.add('hidden');
+            startGameplay();
+        }
+
+        // Event Listeners
+        document.getElementById('startButton').addEventListener('click', async () => {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            await initCamera();
+            startRound1();
+        });
+
+        document.getElementById('redistributeButton').addEventListener('click', () => {
+            showRedistributionUI();
+        });
+
+        document.getElementById('startRound2Button').addEventListener('click', () => {
+            startRound2();
+        });
+
+        document.getElementById('playAgainButton').addEventListener('click', () => {
+            document.getElementById('victoryScreen').classList.add('hidden');
+            document.getElementById('gameBoard').classList.add('hidden');
+            document.getElementById('diceArea').classList.add('hidden');
+            document.getElementById('sumDisplay').classList.add('hidden');
+            document.getElementById('rollCounter').classList.add('hidden');
+            document.getElementById('roundInfo').classList.add('hidden');
+            document.getElementById('instructions').classList.add('hidden');
+            startRound1();
+        });
     </script>
 </body>
 </html>
