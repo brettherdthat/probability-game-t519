@@ -431,7 +431,7 @@
             <p>You have a board with columns numbered 2-12. Each column has 3 chips.</p>
             <p>Roll two dice to get a sum, then remove a chip from that column!</p>
             <p>Your goal: Remove ALL chips in as few rolls as possible!</p>
-            <p style="margin-top: 30px; font-size: 20px;">🎲 Throw your hands like rolling dice - Left hand = left die, Right hand = right die!</p>
+            <p style="margin-top: 30px; font-size: 20px;">🎲 Make a throwing motion with your hand to roll both dice!</p>
             <button id="startButton">START GAME!</button>
         </div>
 
@@ -476,14 +476,8 @@
 
         <!-- Dice Area -->
         <div id="diceArea" class="hidden">
-            <div style="position: relative;">
-                <div class="die-label">Left Hand 👈</div>
-                <div class="die" id="die1">?</div>
-            </div>
-            <div style="position: relative;">
-                <div class="die-label">Right Hand 👉</div>
-                <div class="die" id="die2">?</div>
-            </div>
+            <div class="die" id="die1">?</div>
+            <div class="die" id="die2">?</div>
         </div>
 
         <!-- Sum Display -->
@@ -501,11 +495,11 @@
         <!-- Instructions -->
         <div id="instructions" class="hidden">
             <h3>How to Play:</h3>
-            <p>🎲 Throw your left hand to roll left die</p>
-            <p>🎲 Throw your right hand to roll right die</p>
-            <p>✨ Both dice remove chip automatically</p>
+            <p>🎲 Make a throwing motion to roll both dice</p>
+            <p>✨ Chip removes automatically when sum appears</p>
             <p>🎯 Clear all chips to win!</p>
-            <div class="gesture-hint">THROW BOTH HANDS!</div>
+            <p>⚡ Keep throwing for fast rolls!</p>
+            <div class="gesture-hint">THROW YOUR HAND!</div>
         </div>
 
         <!-- Loading Message -->
@@ -525,14 +519,11 @@
             round2Rolls: 0,
             chips: {},
             gameStarted: false,
-            die1Value: null,
-            die2Value: null,
-            die1Rolled: false,
-            die2Rolled: false,
+            canRoll: true,
             currentSum: 0,
             handTracking: {
-                left: { prevY: 0, throwDetected: false, lastThrowTime: 0 },
-                right: { prevY: 0, throwDetected: false, lastThrowTime: 0 }
+                prevY: 0,
+                lastThrowTime: 0
             }
         };
 
@@ -545,10 +536,10 @@
         }
 
         // Detect throwing gesture (rapid downward movement)
-        function detectThrow(hand, landmarks) {
+        function detectThrow(landmarks) {
             const wrist = landmarks[0];
             const currentY = wrist.y;
-            const prevY = gameState.handTracking[hand].prevY;
+            const prevY = gameState.handTracking.prevY;
 
             // Calculate downward velocity
             const velocity = currentY - prevY;
@@ -556,18 +547,9 @@
             // Throwing detected: rapid downward movement
             const isThrow = velocity > 0.08; // Threshold for throw detection
 
-            gameState.handTracking[hand].prevY = currentY;
+            gameState.handTracking.prevY = currentY;
 
             return isThrow;
-        }
-
-        // Reset dice state for next round
-        function resetDiceState() {
-            gameState.die1Value = null;
-            gameState.die2Value = null;
-            gameState.die1Rolled = false;
-            gameState.die2Rolled = false;
-            updateDiceDisplay();
         }
 
         // Initialize Camera and Hand Tracking
@@ -587,7 +569,7 @@
                 });
 
                 hands.setOptions({
-                    maxNumHands: 2, // Track both hands
+                    maxNumHands: 1, // Track one hand
                     modelComplexity: 1,
                     minDetectionConfidence: 0.6,
                     minTrackingConfidence: 0.6
@@ -596,46 +578,33 @@
                 hands.onResults((results) => {
                     handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
 
-                    if (results.multiHandLandmarks && results.multiHandedness && gameState.gameStarted) {
-                        for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-                            const landmarks = results.multiHandLandmarks[i];
-                            const handedness = results.multiHandedness[i].label; // "Left" or "Right"
+                    if (results.multiHandLandmarks && gameState.gameStarted) {
+                        const landmarks = results.multiHandLandmarks[0];
 
-                            // MediaPipe returns mirrored labels, so flip them
-                            const hand = handedness === 'Left' ? 'right' : 'left';
+                        // Draw hand indicator
+                        const wrist = landmarks[0];
+                        const x = (1 - wrist.x) * handCanvas.width;
+                        const y = wrist.y * handCanvas.height;
 
-                            // Draw hand indicator
-                            const wrist = landmarks[0];
-                            const x = (1 - wrist.x) * handCanvas.width;
-                            const y = wrist.y * handCanvas.height;
+                        // Check if hand is throwing
+                        const isThrow = detectThrow(landmarks);
+                        const now = Date.now();
 
-                            // Check if hand is throwing
-                            const isThrow = detectThrow(hand, landmarks);
-                            const now = Date.now();
-
-                            if (isThrow && now - gameState.handTracking[hand].lastThrowTime > 800) {
-                                gameState.handTracking[hand].lastThrowTime = now;
-
-                                // Roll the corresponding die
-                                if (hand === 'left' && !gameState.die1Rolled) {
-                                    rollDie(1);
-                                } else if (hand === 'right' && !gameState.die2Rolled) {
-                                    rollDie(2);
-                                }
-                            }
-
-                            // Draw hand visualization
-                            const dieRolled = hand === 'left' ? gameState.die1Rolled : gameState.die2Rolled;
-                            handCtx.fillStyle = dieRolled ? 'rgba(74, 222, 128, 0.7)' : 'rgba(255, 215, 0, 0.6)';
-                            handCtx.beginPath();
-                            handCtx.arc(x, y, 30, 0, Math.PI * 2);
-                            handCtx.fill();
-
-                            // Label
-                            handCtx.fillStyle = 'white';
-                            handCtx.font = 'bold 16px Arial';
-                            handCtx.fillText(hand === 'left' ? 'L' : 'R', x - 6, y + 6);
+                        if (isThrow && gameState.canRoll && now - gameState.handTracking.lastThrowTime > 1000) {
+                            gameState.handTracking.lastThrowTime = now;
+                            rollBothDice();
                         }
+
+                        // Draw hand visualization
+                        handCtx.fillStyle = gameState.canRoll ? 'rgba(255, 215, 0, 0.7)' : 'rgba(74, 222, 128, 0.7)';
+                        handCtx.beginPath();
+                        handCtx.arc(x, y, 35, 0, Math.PI * 2);
+                        handCtx.fill();
+
+                        // Add ring for emphasis
+                        handCtx.strokeStyle = 'white';
+                        handCtx.lineWidth = 3;
+                        handCtx.stroke();
                     }
                 });
 
@@ -653,94 +622,57 @@
             }
         }
 
-        // Roll individual die
-        function rollDie(dieNumber) {
-            const die = document.getElementById(`die${dieNumber}`);
-            die.classList.add('rolling');
+        // Roll both dice simultaneously
+        function rollBothDice() {
+            if (!gameState.canRoll) return;
 
-            // Random value
-            const value = Math.floor(Math.random() * 6) + 1;
-
-            setTimeout(() => {
-                if (dieNumber === 1) {
-                    gameState.die1Value = value;
-                    gameState.die1Rolled = true;
-                } else {
-                    gameState.die2Value = value;
-                    gameState.die2Rolled = true;
-                }
-
-                die.textContent = getDiceFace(value);
-                die.classList.remove('rolling');
-                die.classList.add('ready');
-
-                updateDiceDisplay();
-
-                // Check if both dice are rolled
-                if (gameState.die1Rolled && gameState.die2Rolled) {
-                    setTimeout(() => {
-                        processRoll();
-                    }, 300);
-                }
-            }, 400);
-        }
-
-        // Update dice display
-        function updateDiceDisplay() {
-            const die1 = document.getElementById('die1');
-            const die2 = document.getElementById('die2');
-
-            // Update die colors based on state
-            if (gameState.die1Rolled) {
-                die1.classList.add('ready');
-            } else {
-                die1.classList.remove('ready');
-                die1.classList.add('waiting');
-            }
-
-            if (gameState.die2Rolled) {
-                die2.classList.add('ready');
-            } else {
-                die2.classList.remove('ready');
-                die2.classList.add('waiting');
-            }
-
-            // Update sum display
-            if (gameState.die1Rolled && gameState.die2Rolled) {
-                const sum = gameState.die1Value + gameState.die2Value;
-                document.getElementById('sumValue').textContent = sum;
-            } else {
-                document.getElementById('sumValue').textContent = '?';
-            }
-        }
-
-        // Process roll when both dice are ready
-        function processRoll() {
-            const sum = gameState.die1Value + gameState.die2Value;
-            gameState.currentSum = sum;
-
+            gameState.canRoll = false;
             gameState.rollCount++;
+
             if (gameState.round === 1) {
                 gameState.round1Rolls++;
             } else {
                 gameState.round2Rolls++;
             }
+
             updateRollCounter();
 
-            // Remove chip if available
-            if (gameState.chips[sum] > 0) {
-                removeChip(sum);
-            }
+            // Animate both dice
+            const die1 = document.getElementById('die1');
+            const die2 = document.getElementById('die2');
 
-            // Check if round complete
-            if (isRoundComplete()) {
-                endRound();
-            } else {
-                // Reset for next roll
+            die1.classList.add('rolling');
+            die2.classList.add('rolling');
+
+            // Random dice values
+            const value1 = Math.floor(Math.random() * 6) + 1;
+            const value2 = Math.floor(Math.random() * 6) + 1;
+            const sum = value1 + value2;
+
+            gameState.currentSum = sum;
+
+            setTimeout(() => {
+                die1.textContent = getDiceFace(value1);
+                die2.textContent = getDiceFace(value2);
+                document.getElementById('sumValue').textContent = sum;
+
+                die1.classList.remove('rolling');
+                die2.classList.remove('rolling');
+
+                // Remove chip if available
+                if (gameState.chips[sum] > 0) {
+                    removeChip(sum);
+                }
+
                 setTimeout(() => {
-                    resetDiceState();
-                }, 800);
-            }
+                    gameState.canRoll = true;
+
+                    // Check if round complete
+                    if (isRoundComplete()) {
+                        endRound();
+                    }
+                }, 500);
+            }, 500);
         }
 
         // Get dice face emoji
@@ -851,7 +783,12 @@
         // Start gameplay (common for both rounds)
         function startGameplay() {
             gameState.gameStarted = true;
-            resetDiceState();
+            gameState.canRoll = true;
+
+            // Reset dice display
+            document.getElementById('die1').textContent = '?';
+            document.getElementById('die2').textContent = '?';
+            document.getElementById('sumValue').textContent = '0';
 
             document.getElementById('currentRound').textContent = gameState.round;
             document.getElementById('gameBoard').classList.remove('hidden');
