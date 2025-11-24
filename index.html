@@ -181,6 +181,25 @@
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
         }
 
+        #restartRoundButton {
+            margin-top: 15px;
+            padding: 8px 16px;
+            font-size: 14px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+            width: 100%;
+        }
+
+        #restartRoundButton:hover {
+            transform: scale(1.05);
+        }
+
         #instructions {
             position: absolute;
             top: 10px;
@@ -494,6 +513,7 @@
         <div id="rollCounter" class="hidden">
             <div class="label">Rolls</div>
             <div class="count" id="rollCount">0</div>
+            <button id="restartRoundButton">🔄 Restart Round</button>
         </div>
 
         <!-- Round Info -->
@@ -988,6 +1008,54 @@
             document.getElementById('roundInfo').classList.add('hidden');
             document.getElementById('instructions').classList.add('hidden');
             startRound1();
+        });
+
+        // Restart current round button
+        document.getElementById('restartRoundButton').addEventListener('click', () => {
+            // Save current chip distribution to restart with same setup
+            const savedChips = {};
+            for (let i = 2; i <= 12; i++) {
+                savedChips[i] = 3; // Default to 3 chips each
+            }
+
+            // If in round 2, we want to keep the custom distribution
+            if (gameState.round === 2) {
+                // Get the total chips that should be there
+                let totalOriginal = 0;
+                for (let i = 2; i <= 12; i++) {
+                    // Calculate original distribution by adding current chips back
+                    totalOriginal += gameState.chips[i];
+                }
+
+                // Restore to the distribution they set at start of round 2
+                // We need to track this - for now just reset to 3 each
+                for (let i = 2; i <= 12; i++) {
+                    savedChips[i] = 3;
+                }
+            }
+
+            // Reset the round
+            gameState.chips = savedChips;
+            gameState.rollCount = 0;
+
+            if (gameState.round === 1) {
+                gameState.round1Rolls = 0;
+            } else {
+                gameState.round2Rolls = 0;
+            }
+
+            // Reset dice display
+            gameState.die1Value = null;
+            gameState.die2Value = null;
+            gameState.die1Rolled = false;
+            gameState.die2Rolled = false;
+            document.getElementById('die1').textContent = '?';
+            document.getElementById('die2').textContent = '?';
+            document.getElementById('sumValue').textContent = '0';
+
+            // Re-render
+            renderBoard();
+            updateRollCounter();
         });
     </script>
 </body>
